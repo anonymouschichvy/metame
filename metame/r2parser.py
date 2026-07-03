@@ -1,5 +1,5 @@
 
-import metame.x86handler as x86handler
+import metame.x64handler as x64handler
 import metame.constants as constants
 
 import r2pipe
@@ -31,7 +31,7 @@ class R2Parser:
 
     def iterate_fcn(self):
         if self.arch == "x86":
-            arch = x86handler.X86Handler(self.bits, self.debug, self.force)
+            arch = x64handler.X64Handler(self.bits, self.debug, self.force)
         replacements = []
         print("[INFO] Loading functions information")
         fcns = json.loads(self.r2.cmd("aflj"))
@@ -40,9 +40,9 @@ class R2Parser:
             if f["type"] == "fcn":
                 try:
                     fcn_ctx = json.loads(self.r2.cmd("pdfj @%s" % f["name"]))
-                except:
-                    print("[ERROR] Error disassembling function %s" % f["name"])
-                replacements += arch.replace_fcn_opcodes(fcn_ctx)
+                    replacements += arch.replace_fcn_opcodes(fcn_ctx)
+                except Exception as e:
+                    print("[ERROR] Error disassembling function %s: %s" % (f["name"], e))
         return replacements
 
     def patch_binary(self, patches):

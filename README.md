@@ -12,13 +12,17 @@ From Wikipedia:
 metame implementation works this way:
 
 1. Open a given binary and analyze the code
-2. Randomly replace instructions with equivalences in logic and size
+2. Randomly replace instructions with equivalences in logic and size using a highly optimized and robust `x64handler` engine
 3. Copy and patch the original binary to generate a mutated variant
 
 It currently supports the following architectures:
 
 - x86 32 bits
-- x86 64 bits
+- x86 64 bits (x64)
+
+The engine features an optimized lookup system:
+- **O(1) Mnemonic Indexing**: Grouping substitution rules by instruction mnemonic for ultra-fast matching.
+- **Dynamic NOP Replacement**: Generating random NOP sequences dynamically on-the-fly rather than rebuilding/recompiling rules during execution.
 
 Also, it supports a variety of file formats, as [radare2][1] is used for
 file parsing and code analysis.
