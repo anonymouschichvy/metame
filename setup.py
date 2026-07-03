@@ -1,9 +1,9 @@
-from distutils.core import setup
+from setuptools import setup
 
 setup(
   name                  = 'metame',
   packages              = ['metame'],
-  version               = '0.4',
+  version               = '0.5',
   description           = 'metame is a metamorphic code engine for arbitrary executables',
   author                = 'Alberto Ortega',
   author_email          = 'aortega.lms+metame@gmail.com',
