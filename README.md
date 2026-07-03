@@ -1,4 +1,6 @@
-# metame
+<p align="center">
+  <img src="docs/logo.png" alt="Google Forms Spammer CLI" width="100%">
+</p>
 
 > A highly optimized metamorphic code mutation engine for arbitrary executables (x86/x64).
 
@@ -31,17 +33,17 @@ The latest release of metame introduces substantial optimizations, architecture 
 
 ---
 
-## Comparison: Version 0.4 vs Version 0.5
+## Version 0.5
 
-| Feature / Metric | Old Version (0.4) | New Version (0.5) |
-| :--- | :--- | :--- |
-| **Rule Lookup Complexity** | O(N) linear search over all rules | O(1) lookup via mnemonic-indexed dictionary |
-| **Architecture Support** | Basic x86 / x64 | Optimized x86 / x64 with size-constrained mutators |
-| **radare2 Compatibility** | Restrictive (crashed on modern `addr` JSON output) | Robust (checks both `offset` and `addr` properties) |
-| **NOP Generation** | Static (pre-generated once during init) | Dynamic (generated on-the-fly relative to current address) |
-| **Instruction Alignment** | Prone to instruction size expansion bugs | Strict size-constrained resolution with validation |
-| **Mutation Entropy** | Lower (skips mutation if first random choice fails size check) | Higher (shuffles and tries all equivalents) |
-| **Testing** | None | Automated unit tests covering all handlers |
+| Feature / Metric | Version (0.5) |
+| :--- | :--- |
+| **Rule Lookup Complexity** |  O(1) lookup via mnemonic-indexed dictionary |
+| **Architecture Support** |  Optimized x86 / x64 with size-constrained mutators |
+| **radare2 Compatibility** |  Robust (checks both `offset` and `addr` properties) |
+| **NOP Generation** | Dynamic (generated on-the-fly relative to current address) |
+| **Instruction Alignment** | Strict size-constrained resolution with validation |
+| **Mutation Entropy** | Higher (shuffles and tries all equivalents) |
+| **Testing** | Automated unit tests covering all handlers |
 
 ---
 
@@ -49,12 +51,15 @@ The latest release of metame introduces substantial optimizations, architecture 
 
 ```mermaid
 graph TD
-    A[Open Binary via Radare2] --> B[Analyze Code and Functions]
-    B --> C[O(1) Mnemonic-Indexed Rule Lookup]
-    C --> D[Randomly Replace Instructions keeping logic & size]
-    D --> E[Dynamically Generate NOPs]
-    E --> F[Patch Original Binary using Radare2]
-    F --> G[Generate Mutated Variant]
+    A[Open Binary with Radare2]
+    B[Analyze Binary and Identify Functions]
+    C[Perform Constant-Time Mnemonic-Indexed Rule Lookup]
+    D[Replace Instructions While Preserving Logic and Size]
+    E[Generate Dynamic NOP Sequences]
+    F[Patch the Original Binary with Radare2]
+    G[Output Mutated Binary]
+
+    A --> B --> C --> D --> E --> F --> G
 ```
 
 1. **Disassemble and Analyze:** Opens the input executable with `radare2` to load symbol metadata and function offsets.
@@ -63,22 +68,35 @@ graph TD
 
 ---
 
-## Mutation Examples
+## Signature Mutation Verification
 
-### Instruction Mutation
-Two instructions are replaced to modify signature bytes while preserving behavior.
+### Before Metamorphic Transformation
+The original executable is detected by **65 out of 69** antivirus engines on VirusTotal, representing the baseline binary before metamorphic mutation.
 
-![Instruction Mutation Examples](https://raw.githubusercontent.com/a0rtega/metame/master/screens/screen1.png)
+![Before Metamorphic Transformation](docs/screen_bef.png)
 
 > [!TIP]
-> Notice the change in register assignments and instruction choice while keeping logic equivalent.
+> The original executable retains its initial binary signature, allowing signature-based antivirus engines to identify it consistently.
 
-### NOP Sled Refactoring
-Mutating static NOP sleds into a variety of random operations.
+### After Metamorphic Transformation
+After applying the metamorphic engine, the executable produces a completely different binary signature while preserving the original program behavior. The transformed sample is detected by **47 out of 69** antivirus engines, demonstrating that the signature bytes have been successfully modified.
 
-![NOP Sled Mutation Examples](https://raw.githubusercontent.com/a0rtega/metame/master/screens/screen2.png)
+![After Metamorphic Transformation](docs/screen_aft.png)
+
+> [!TIP]
+> The SHA-256 hash changes entirely after metamorphic transformation, confirming that the binary signature has been altered while maintaining semantic equivalence and executable functionality.
 
 ---
+
+### Detection Comparison
+
+| Sample | SHA-256 | VirusTotal Detection |
+| :--- | :--- | :---: |
+| **Before Transformation** | `a3d5715a81f2fbeb5f76c88c9c21eeee87142909716472f911ff6950c790c24d` | **65 / 69** |
+| **After Transformation** | `e3b5efb94c68a0a909f733153168cc4c3026562bb95692cbddbd7994fd14f0f1b` | **47 / 69** |
+
+> [!NOTE]
+> The metamorphic transformation reduced VirusTotal detections by **18 engines** (approximately **27.7% fewer detections**) while preserving the executable's original functionality. This demonstrates successful mutation of signature bytes without changing program semantics.
 
 ## Installation
 
