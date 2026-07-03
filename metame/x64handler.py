@@ -348,23 +348,28 @@ class X64Handler:
                             if val is not None:
                                 res_ass = res_ass.replace(f"{{{idx}}}", val.lower())
 
+                    # Get instruction offset/address (supports both 'offset' and 'addr' formats)
+                    op_offset = op.get("offset", op.get("addr"))
+
                     # Dynamically resolve NOP placeholders
                     def nop_resolver(match_obj):
                         nop_size = int(match_obj.group(1))
-                        return self.get_nops(nop_size, op["offset"])
+                        return self.get_nops(nop_size, op_offset)
 
                     res_ass = re.sub(r"\{nop(\d+)\}", nop_resolver, res_ass)
 
                     try:
-                        new_assembly = self.assemble_code(res_ass, op["offset"])
+                        new_assembly = self.assemble_code(res_ass, op_offset)
                     except Exception as e:
                         if self.debug:
+                            import traceback
+                            traceback.print_exc()
                             print(f"[DEBUG] Keystone assembly failed for '{res_ass}': {e}")
                         continue
 
                     if len(new_assembly) == opcodes_len:
                         replacements.append({
-                            "offset": op["offset"],
+                            "offset": op_offset,
                             "newbytes": new_assembly
                         })
                         count += count_2 - 1
