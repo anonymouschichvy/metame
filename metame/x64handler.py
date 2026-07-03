@@ -4,6 +4,15 @@ from typing import Dict, List, Tuple, Set, Pattern, Optional, Any
 from keystone import *
 
 class X64Handler:
+    def normalize_opcode(self, opcode: str) -> str:
+        # Convert to lowercase and strip outer spaces
+        opcode = opcode.lower().strip()
+        # Collapse multiple spaces or tabs into a single space
+        opcode = re.sub(r"\s+", " ", opcode)
+        # Ensure exactly one space after commas
+        opcode = re.sub(r"\s*,\s*", ", ", opcode)
+        return opcode
+
     def get_nops(self, size: int, prev_ins_size: int = 0) -> str:
         if self.bits == 32:
             regs = ["eax", "ebx", "ecx", "edx", "esi", "edi"]
@@ -167,7 +176,7 @@ class X64Handler:
             compiled_rule = []
             for eq in sub_rule:
                 patterns, asm_fmt, is_match = eq
-                compiled_patterns = tuple(re.compile(p) for p in patterns)
+                compiled_patterns = tuple(re.compile(p, re.IGNORECASE) for p in patterns)
                 compiled_rule.append((compiled_patterns, asm_fmt, is_match))
             compiled_rule_tuple = tuple(compiled_rule)
 
@@ -201,6 +210,7 @@ class X64Handler:
             if not opcode_str:
                 continue
 
+            opcode_str = self.normalize_opcode(opcode_str)
             mnemonic = opcode_str.split()[0]
             if mnemonic not in self.X64_SUBS:
                 continue
@@ -223,6 +233,7 @@ class X64Handler:
                         match_failed = True
                         break
 
+                    next_opcode = self.normalize_opcode(next_opcode)
                     m = regex.match(next_opcode)
                     if not m:
                         match_failed = True
@@ -236,49 +247,48 @@ class X64Handler:
                 if match_failed:
                     continue
 
-                sub = random.choice(x86_sub)
-                if self.force:
-                    for _ in range(10):
-                        if sub == x86_find:
-                            sub = random.choice(x86_sub)
-                        else:
-                            break
+                # Shuffle candidate replacements to find one that succeeds and matches size
+                shuffled_sub = list(x86_sub)
+                random.shuffle(shuffled_sub)
 
-                if sub == x86_find:
-                    continue
+                success = False
+                for sub in shuffled_sub:
+                    if self.force and sub == x86_find:
+                        continue
 
-                res_ass = sub[1]
-                for m in ms:
-                    for idx, val in m.groupdict().items():
-                        if val is not None:
-                            res_ass = res_ass.replace(f"{{{idx}}}", val)
+                    res_ass = sub[1]
+                    for m in ms:
+                        for idx, val in m.groupdict().items():
+                            if val is not None:
+                                res_ass = res_ass.replace(f"{{{idx}}}", val.lower())
 
-                # Dynamically resolve NOP placeholders
-                def nop_resolver(match_obj):
-                    nop_size = int(match_obj.group(1))
-                    return self.get_nops(nop_size)
+                    # Dynamically resolve NOP placeholders
+                    def nop_resolver(match_obj):
+                        nop_size = int(match_obj.group(1))
+                        return self.get_nops(nop_size)
 
-                res_ass = re.sub(r"\{nop(\d+)\}", nop_resolver, res_ass)
+                    res_ass = re.sub(r"\{nop(\d+)\}", nop_resolver, res_ass)
 
-                if self.debug:
-                    print(f"[DEBUG] Replacing instruction at {hex(op['offset'])} ({opcode_str}) with: {res_ass} ... ")
+                    try:
+                        new_assembly = self.assemble_code(res_ass)
+                    except Exception as e:
+                        if self.debug:
+                            print(f"[DEBUG] Keystone assembly failed for '{res_ass}': {e}")
+                        continue
 
-                try:
-                    new_assembly = self.assemble_code(res_ass)
-                except Exception as e:
-                    if self.debug:
-                        print(f"[DEBUG] Keystone assembly failed for '{res_ass}': {e}")
-                    continue
+                    if len(new_assembly) == opcodes_len:
+                        replacements.append({
+                            "offset": op["offset"],
+                            "newbytes": new_assembly
+                        })
+                        count += count_2 - 1
+                        success = True
+                        break
+                    else:
+                        if self.debug:
+                            print(f"[DEBUG] Size mismatch for '{res_ass}' (new: {len(new_assembly)//2}, expected: {opcodes_len//2})")
 
-                if len(new_assembly) == opcodes_len:
-                    replacements.append({
-                        "offset": op["offset"],
-                        "newbytes": new_assembly
-                    })
-                    count += count_2 - 1
+                if success:
                     break
-                else:
-                    if self.debug:
-                        print(f"[DEBUG] Instruction opcodes are different in size (new: {len(new_assembly)//2}, expected: {opcodes_len//2})")
 
         return replacements

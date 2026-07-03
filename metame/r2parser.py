@@ -18,13 +18,15 @@ class R2Parser:
         print("[INFO] Opening file with r2")
         self.r2 = r2pipe.open(filename, flags)
         info = json.loads(self.r2.cmd("ij").replace("\\", "\\\\"))
-        if "bin" not in info.keys():
-            raise Exception("[ERROR] File type not supported")
-        if not info["bin"]["bits"] in constants.supported_bits or \
-           not info["bin"]["arch"] in constants.supported_archs:
-            raise Exception("[ERROR] Architecture not supported")
-        self.arch = info["bin"]["arch"]
-        self.bits = info["bin"]["bits"]
+        bin_info = info.get("bin", {})
+        if not bin_info:
+            raise Exception("[ERROR] File type not supported or binary metadata missing")
+        self.arch = bin_info.get("arch")
+        self.bits = bin_info.get("bits")
+        if not self.arch or not self.bits:
+            raise Exception("[ERROR] Architecture or bits details missing in file metadata")
+        if self.bits not in constants.supported_bits or self.arch not in constants.supported_archs:
+            raise Exception("[ERROR] Architecture (%s) or bits (%s) not supported" % (self.arch, self.bits))
         if anal:
             print("[INFO] Analyzing functions with r2")
             self.r2.cmd("aaa")

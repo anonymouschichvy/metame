@@ -16,6 +16,11 @@ def main():
         parser.print_help()
         sys.exit(1)
 
+    import os
+    if not os.path.exists(args.input):
+        print("[ERROR] Input file does not exist: %s" % args.input)
+        sys.exit(1)
+
     r = r2parser.R2Parser(args.input, True, debug=args.debug, force_replace=args.force)
     patches = r.iterate_fcn()
     r.close()
