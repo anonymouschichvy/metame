@@ -37,7 +37,7 @@ class TestX64Handler(unittest.TestCase):
                 "push eax; pop eax", "push ebx; pop ebx", 
                 "push ecx; pop ecx", "push edx; pop edx",
                 "push esi; pop esi", "push edi; pop edi",
-                "pushad; popad", "nop; nop"
+                "pushad; popad", "nop; nop", "xchg ax, ax"
             ]
             self.assertTrue(nops in valid_nops or any(reg in nops for reg in ["eax", "ebx", "ecx", "edx", "esi", "edi"]))
 
@@ -50,7 +50,10 @@ class TestX64Handler(unittest.TestCase):
         # Size 2
         for _ in range(20):
             nops = handler.get_nops(2)
-            self.assertTrue(any(reg in nops for reg in ["rax", "rbx", "rcx", "rdx", "rsi", "rdi"]))
+            self.assertTrue(
+                nops in ["xchg ax, ax", "nop; nop"] or
+                any(reg in nops for reg in ["rax", "rbx", "rcx", "rdx", "rsi", "rdi"])
+            )
 
     def test_replace_fcn_opcodes_32bit(self):
         handler = X64Handler(bits=32, force_replace=True)

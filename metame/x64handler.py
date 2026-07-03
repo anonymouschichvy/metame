@@ -13,7 +13,7 @@ class X64Handler:
         opcode = re.sub(r"\s*,\s*", ", ", opcode)
         return opcode
 
-    def get_nops(self, size: int, prev_ins_size: int = 0) -> str:
+    def get_nops(self, size: int, addr: int = 0) -> str:
         if self.bits == 32:
             regs = ["eax", "ebx", "ecx", "edx", "esi", "edi"]
         else:
@@ -30,79 +30,82 @@ class X64Handler:
                 elif r == 2:
                     return "pushad; popad"
                 elif r == 3:
-                    reg = random.choice(regs)
-                    return f"inc {reg}; dec {reg}"
+                    return "xchg ax, ax"
                 else:
                     return "nop; nop"
             else:
-                r = random.randint(1, 2)
-                reg = random.choice(regs)
-                if r == 1:
-                    return f"push {reg}; pop {reg}"
-                else:
-                    return f"inc {reg}; dec {reg}"
-        elif size == 3:
-            if self.bits == 32:
-                r = random.randint(1, 7)
-                if r == 1:
-                    return f"jmp {3 + prev_ins_size}; inc {random.choice(regs)}"
-                elif r == 2:
-                    return f"jmp {3 + prev_ins_size}; push {random.choice(regs)}"
-                elif r == 3:
-                    return f"jmp {3 + prev_ins_size}; pop {random.choice(regs)}"
-                elif r == 4:
-                    reg = random.choice(regs)
-                    return f"add {reg}, 0"
-                elif r == 5:
-                    reg = random.choice(regs)
-                    return f"or {reg}, 0"
-                elif r == 6:
-                    return f"nop; {self.get_nops(2)}"
-                else:
-                    return f"{self.get_nops(2)}; nop"
-            else:
-                r = random.randint(1, 6)
-                reg = random.choice(regs)
-                if r == 1:
-                    return f"push {reg}; pop {reg}; nop"
-                elif r == 2:
-                    return f"nop; push {reg}; pop {reg}"
-                elif r == 3:
-                    return f"inc {reg}; dec {reg}; nop"
-                elif r == 4:
-                    return f"nop; inc {reg}; dec {reg}"
-                elif r == 5:
-                    return f"nop; {self.get_nops(2)}"
-                else:
-                    return f"{self.get_nops(2)}; nop"
-        elif size == 4:
-            if self.bits == 32:
                 r = random.randint(1, 3)
                 if r == 1:
                     reg = random.choice(regs)
-                    return f"add {reg}, 5; sub {reg}, 5"
+                    return f"push {reg}; pop {reg}"
+                elif r == 2:
+                    return "xchg ax, ax"
+                else:
+                    return "nop; nop"
+        elif size == 3:
+            if self.bits == 32:
+                r = random.randint(1, 6)
+                if r == 1:
+                    return f"jmp {addr + 3}; inc {random.choice(regs)}"
+                elif r == 2:
+                    return f"jmp {addr + 3}; push {random.choice(regs)}"
+                elif r == 3:
+                    return f"jmp {addr + 3}; pop {random.choice(regs)}"
+                elif r == 4:
+                    return "nop dword ptr [eax]"
+                elif r == 5:
+                    return f"nop; {self.get_nops(2, addr + 1)}"
+                else:
+                    return f"{self.get_nops(2, addr)}; nop"
+            else:
+                r = random.randint(1, 6)
+                if r == 1:
+                    reg = random.choice(regs)
+                    return f"push {reg}; pop {reg}; nop"
                 elif r == 2:
                     reg = random.choice(regs)
-                    return f"xor {reg}, 0; {self.get_nops(1)}"
+                    return f"nop; push {reg}; pop {reg}"
+                elif r == 3:
+                    return f"jmp {addr + 3}; push {random.choice(regs)}"
+                elif r == 4:
+                    return "nop dword ptr [rax]"
+                elif r == 5:
+                    return f"nop; {self.get_nops(2, addr + 1)}"
                 else:
-                    return f"{self.get_nops(2)}; {self.get_nops(2)}"
+                    return f"{self.get_nops(2, addr)}; nop"
+        elif size == 4:
+            if self.bits == 32:
+                r = random.randint(1, 6)
+                if r == 1:
+                    return f"jmp {addr + 4}; pop {random.choice(regs)}; pop {random.choice(regs)}"
+                elif r == 2:
+                    return f"jmp {addr + 4}; push {random.choice(regs)}; push {random.choice(regs)}"
+                elif r == 3:
+                    return f"jmp {addr + 4}; push {random.choice(regs)}; pop {random.choice(regs)}"
+                elif r == 4:
+                    reg = random.choice(regs)
+                    return f"xor {reg}, 0; nop"
+                elif r == 5:
+                    return "nop dword ptr [eax + eax]"
+                else:
+                    return f"{self.get_nops(2, addr)}; {self.get_nops(2, addr + 2)}"
             else:
                 r = random.randint(1, 7)
-                reg = random.choice(regs)
                 if r == 1:
-                    return f"jmp {4 + prev_ins_size}; pop {random.choice(regs)}; pop {random.choice(regs)}"
+                    return f"jmp {addr + 4}; pop {random.choice(regs)}; pop {random.choice(regs)}"
                 elif r == 2:
-                    return f"jmp {4 + prev_ins_size}; push {random.choice(regs)}; push {random.choice(regs)}"
+                    return f"jmp {addr + 4}; push {random.choice(regs)}; push {random.choice(regs)}"
                 elif r == 3:
-                    return f"jmp {4 + prev_ins_size}; push {random.choice(regs)}; pop {random.choice(regs)}"
+                    return f"jmp {addr + 4}; push {random.choice(regs)}; pop {random.choice(regs)}"
                 elif r == 4:
-                    return f"jmp {4 + prev_ins_size}; pop {random.choice(regs)}; push {random.choice(regs)}"
+                    return f"jmp {addr + 4}; pop {random.choice(regs)}; push {random.choice(regs)}"
                 elif r == 5:
+                    reg = random.choice(regs)
                     return f"add {reg}, 0"
                 elif r == 6:
-                    return f"or {reg}, 0"
+                    return "nop dword ptr [rax + rax]"
                 else:
-                    return f"{self.get_nops(2)}; {self.get_nops(2)}"
+                    return f"{self.get_nops(2, addr)}; {self.get_nops(2, addr + 2)}"
         
         return "; ".join(["nop"] * size)
 
@@ -348,7 +351,7 @@ class X64Handler:
                     # Dynamically resolve NOP placeholders
                     def nop_resolver(match_obj):
                         nop_size = int(match_obj.group(1))
-                        return self.get_nops(nop_size)
+                        return self.get_nops(nop_size, op["offset"])
 
                     res_ass = re.sub(r"\{nop(\d+)\}", nop_resolver, res_ass)
 

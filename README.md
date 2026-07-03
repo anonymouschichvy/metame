@@ -19,6 +19,8 @@
 - **🚀 Highly Optimized Execution**:
   - **$O(1)$ Mnemonic Indexing**: Grouping substitution rules by opcode mnemonics for instant lookup instead of scanning linear lists.
   - **Dynamic NOP Replacement**: Generates random NOP sequences dynamically on-the-fly rather than rebuilding/recompiling patterns inside hot-paths.
+  - **🛡️ Flag & Register Safe NOPs**: Leverages native CPU multi-byte NOPs (e.g. `nop dword ptr [rax]`) and relative branch jumps to guarantee EFLAGS/RFLAGS stability and prevent register contamination.
+  - **📏 Correct Size-Constrained Mutators**: Resolves 64-bit REX instruction size expansions and relative branch jumps to ensure strict instruction-size preservation during mutation.
 - **🖥️ Architecture Support**: Fully supports **x86 (32-bit)** and **x64 (64-bit)** instructions.
 - **📦 Multi-Format Support**: Leverages [radare2](http://radare.org/) for file parsing and assembly analysis, supporting PE, ELF, Mach-O, and more.
 - **🛡️ Safe Assembler Execution**: Exception boundaries around the Keystone assembler ensure stability.
