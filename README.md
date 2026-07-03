@@ -76,10 +76,10 @@ graph TD
 ## Under the Hood
 
 The execution logic is split into several core components:
-- [__init__.py](file:///C:/Users/Ervin%20Regio/Desktop/MACOSX/metame/metame/__init__.py): Coordinates argument parsing, input/output validation, and controls the parser iterations.
-- [r2parser.py](file:///C:/Users/Ervin%20Regio/Desktop/MACOSX/metame/metame/r2parser.py): Establishes `r2pipe` connections, parses binary target metadata, performs functions analysis, and applies patch blocks.
-- [x64handler.py](file:///C:/Users/Ervin%20Regio/Desktop/MACOSX/metame/metame/x64handler.py): Houses the transformation engine, NOP generators, compilation abstractions via Keystone Engine, and mutation definitions.
-- [constants.py](file:///C:/Users/Ervin%20Regio/Desktop/MACOSX/metame/metame/constants.py): Declares architecture target support limits.
+- [__init__.py](metame/__init__.py): Coordinates argument parsing, input/output validation, and controls the parser iterations.
+- [r2parser.py](metame/r2parser.py): Establishes `r2pipe` connections, parses binary target metadata, performs functions analysis, and applies patch blocks.
+- [x64handler.py](metame/x64handler.py): Houses the transformation engine, NOP generators, compilation abstractions via Keystone Engine, and mutation definitions.
+- [constants.py](metame/constants.py): Declares architecture target support limits.
 
 ### 1. Mnemonic-Indexed Rule Lookup
 Earlier versions of metamorphic engines scanned mutation rules linearly. `metame` indexes rules by the mnemonic of the first instruction (e.g., `mov`, `add`, `xor`). During iteration, it checks the dictionary in $O(1)$ time to quickly verify if the instruction is a candidate for mutation.
@@ -101,7 +101,7 @@ Standard single-byte NOPs (`0x90`) are easily identified by signatures. `metame`
 
 ## Supported Instruction Mutations
 
-Detailed mutation behavior is defined inside [x64handler.py](file:///C:/Users/Ervin%20Regio/Desktop/MACOSX/metame/metame/x64handler.py).
+Detailed mutation behavior is defined inside [x64handler.py](metame/x64handler.py).
 
 ### 32-bit (x86) Mutator Rules
 The engine checks for the following patterns and replaces them with one of the equivalents:
@@ -251,7 +251,7 @@ pip install metame
 ```
 
 ### Docker Setup
-To run `metame` within a containerized environment, use the provided [Dockerfile](file:///C:/Users/Ervin%20Regio/Desktop/MACOSX/metame/Dockerfile). This automatically builds the environment with the correct Radare2, Keystone, and Python libraries:
+To run `metame` within a containerized environment, use the provided [Dockerfile](Dockerfile). This automatically builds the environment with the correct Radare2, Keystone, and Python libraries:
 
 ```bash
 docker build -t metame .
@@ -259,10 +259,6 @@ docker run -it metame
 ```
 
 ---
-
-## Usage
-
-The entry script is located at [scripts/metame](file:///C:/Users/Ervin%20Regio/Desktop/MACOSX/metame/scripts/metame).
 
 ### Command-line Options
 
@@ -286,8 +282,17 @@ To force mutations where replacement candidates are limited:
 metame -i original.exe -o mutated.exe -f
 ```
 
+### Metamorphic Transformation Process
+
+The metamorphic engine analyzes the executable using **radare2**, identifies candidate instructions, and applies semantics-preserving instruction substitutions to modify the binary signature without changing the program's behavior. In this example, the engine successfully patched the executable by replacing **~ instructions**, producing a new binary with a different signature while maintaining its original functionality.
+
+![Metamorphic Transformation Process](docs/metame-process.png)
+
+> [!TIP]
+> The output confirms that the metamorphic engine completed the transformation successfully, reporting **53 modified instructions**. These instruction-level mutations alter the executable's byte signature while preserving its semantic behavior, demonstrating the effectiveness of metamorphic code transformation.
+
 ---
 
 ## License
 
-This project is licensed under the MIT License. See the [LICENSE](file:///C:/Users/Ervin%20Regio/Desktop/MACOSX/metame/LICENSE) file for details.
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
