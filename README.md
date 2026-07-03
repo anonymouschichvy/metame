@@ -1,71 +1,98 @@
-# metame
+# 🌀 metame
 
-metame is a simple metamorphic code engine for arbitrary executables.
+> A highly optimized metamorphic code mutation engine for arbitrary executables (x86/x64).
 
-From Wikipedia:
+[![Python Support](https://img.shields.io/badge/python-3.8+-blue.svg)](https://www.python.org/)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Version](https://img.shields.io/badge/version-0.5-green.svg)](setup.py)
 
-> Metamorphic code is code that when run outputs a logically equivalent
-> version of its own code under some interpretation.
-> This is used by computer viruses to avoid the pattern recognition of
-> anti-virus software.
+---
 
-metame implementation works this way:
+## 💡 What is Metamorphic Code?
 
-1. Open a given binary and analyze the code
-2. Randomly replace instructions with equivalences in logic and size using a highly optimized and robust `x64handler` engine
-3. Copy and patch the original binary to generate a mutated variant
+> **Metamorphic code** is code that, when run or compiled, outputs a logically equivalent version of itself. In cybersecurity, this technique is typically used to evade signature-based detection mechanisms (like anti-virus pattern recognition) by ensuring the binary looks completely different on every generation while retaining the exact same logic and functionality.
 
-It currently supports the following architectures:
+---
 
-- x86 32 bits
-- x86 64 bits (x64)
+## ✨ Features
 
-The engine features an optimized lookup system:
-- **O(1) Mnemonic Indexing**: Grouping substitution rules by instruction mnemonic for ultra-fast matching.
-- **Dynamic NOP Replacement**: Generating random NOP sequences dynamically on-the-fly rather than rebuilding/recompiling rules during execution.
+- **🚀 Highly Optimized Execution**:
+  - **$O(1)$ Mnemonic Indexing**: Grouping substitution rules by opcode mnemonics for instant lookup instead of scanning linear lists.
+  - **Dynamic NOP Replacement**: Generates random NOP sequences dynamically on-the-fly rather than rebuilding/recompiling patterns inside hot-paths.
+- **🖥️ Architecture Support**: Fully supports **x86 (32-bit)** and **x64 (64-bit)** instructions.
+- **📦 Multi-Format Support**: Leverages [radare2](http://radare.org/) for file parsing and assembly analysis, supporting PE, ELF, Mach-O, and more.
+- **🛡️ Safe Assembler Execution**: Exception boundaries around the Keystone assembler ensure stability.
 
-Also, it supports a variety of file formats, as [radare2][1] is used for
-file parsing and code analysis.
+---
 
-Example of code before and after mutation:
+## ⚙️ How It Works
 
-![alt text](https://raw.githubusercontent.com/a0rtega/metame/master/screens/screen1.png "Spot the differences")
-
-Hint: Two instructions have been replaced in this snippet.
-
-Here another example on how it can mutate a NOP sled into equivalent code:
-
-![alt text](https://raw.githubusercontent.com/a0rtega/metame/master/screens/screen2.png "Spot the differences")
-
-## Installation
-
+```mermaid
+graph TD
+    A[Open Binary via Radare2] --> B[Analyze Code / Functions]
+    B --> C[O(1) Mnemonic-Indexed Rule Lookup]
+    C --> D[Randomly Replace Instructions keeping logic & size]
+    D --> E[Dynamically Generate NOPs]
+    E --> F[Patch Original Binary using Radare2]
+    F --> G[Generate Mutated Variant]
 ```
+
+1. **Disassemble & Analyze**: Opens the input executable with `radare2` to load symbol metadata and function offsets.
+2. **Mutate Opcodes**: Scans each instruction, instantly queries candidate replacement patterns, and chooses a random matching sequence of equivalent size.
+3. **Patch & Save**: Copies the original file and overwrites the target instruction offsets with the newly assembled metamorphic bytes.
+
+---
+
+## 📊 Mutation Examples
+
+### Example 1: Instruction Mutation
+*Can you spot the difference between the original and mutated assembly?*
+
+![Spot the differences](https://raw.githubusercontent.com/a0rtega/metame/master/screens/screen1.png)
+
+> [!TIP]
+> Two instructions were replaced in the snippet above to modify signature bytes while preserving behavior.
+
+### Example 2: NOP Sled Refactoring
+*Mutating static NOP sleds into a variety of random operations.*
+
+![Spot the differences](https://raw.githubusercontent.com/a0rtega/metame/master/screens/screen2.png)
+
+---
+
+## 🚀 Installation
+
+```bash
 pip install metame
 ```
 
-This should also install the requirements.
+### Prerequisites
+- **[radare2](http://radare.org/)**: Used for binary analysis. Please make sure it's installed and available on your system path.
+- **`simplejson`** (Optional):
+  ```bash
+  pip install simplejson
+  ```
 
-You will also need [radare2][1]. Refer to the official website for
-installation instructions.
+---
 
-`simplejson` is also a "nice to have" for a small performance
-boost:
+## 📖 Usage
 
-```
-pip install simplejson
-```
+Run the engine from the command line:
 
-## Usage
-
-```
+```bash
 metame -i original.exe -o mutation.exe -d
 ```
 
-Use `metame -h` for help.
+### Options
+- `-i`, `--input`: Path to the input file to mutate.
+- `-o`, `--output`: Path to save the mutated file.
+- `-d`, `--debug`: Print detailed replacement logs.
+- `-f`, `--force`: Force instruction replacement even if it reduces metamorphism entropy.
 
-## License
+Use `metame -h` for a full list of commands.
 
-This project is released under the terms of the MIT license.
+---
 
-[1]: http://radare.org/
+## 📄 License
 
+This project is licensed under the **MIT License**. See the `LICENSE` file for details.
