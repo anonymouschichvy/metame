@@ -27,6 +27,20 @@
 
 ---
 
+## 🆕 Key Changes & Improvements (v0.5 vs. Legacy v0.4)
+
+This modernized version introduces major performance, stability, compatibility, and logic improvements over the old unmaintained version (`metame_old` / v0.4):
+
+- **⚡ $O(1)$ Mnemonic Indexing**: Grouping substitution rules by opcode mnemonics allows instant lookup during instruction scans, replacing slow linear searches over all rules.
+- **🔄 Dynamic & Smart NOP Sleds**: Placeholder resolution (`{nop1}`, `{nop2}`, etc.) generates NOP sequences dynamically based on the exact target memory address to keep relative branch jumps correct.
+- **🛡️ Flag-Safe & Register-Safe NOPs**: Employs multi-byte CPU NOP instructions (e.g. `nop dword ptr [rax]`) and safe exchange operations (`xchg ax, ax`) rather than flag-altering instructions or ESP/RSP-altering push/pop sequences.
+- **➕ Expanded Metamorphic Rules**: Adds logic swaps for branch aliases (`je`/`jz`, `jne`/`jnz`), flag-safe arithmetic expansions (`add reg, 1` $\leftrightarrow$ `inc reg`), and `shl` expansions.
+- **🌐 Modern Radare2 Compatibility**: Resolves crashes by supporting both `"offset"` and `"addr"` fields in JSON output from modern versions of `radare2`. Opcode normalization ensures parsing handles varying spacing/casing gracefully.
+- **🐛 Error Resilience**: Corrects a bug where disassembling a single corrupted function would crash the entire metamorphic iteration. Added target path validation and cleaner error outputs.
+- **🧪 Automated Test Coverage**: Integrates a complete test suite to assert correctness on both 32-bit and 64-bit platforms.
+
+---
+
 ## ⚙️ How It Works
 
 ```mermaid
@@ -64,13 +78,8 @@ graph TD
 
 ## 🚀 Installation
 
-### From PyPI
-```bash
-pip install metame
-```
-
-### From Source (Local Development)
-Navigate to the root directory of the project and run one of the following commands:
+### From Source (Recommended)
+This codebase contains critical fixes for compatibility with modern versions of `radare2` (which use the `"addr"` field instead of `"offset"` in JSON output). Installing from source is highly recommended:
 
 **Developer Mode (Recommended)**:
 Installs the package in editable mode. Any changes to the source code are reflected immediately without re-installing:
@@ -83,8 +92,15 @@ pip install -e .
 pip install .
 ```
 
+### From PyPI
+> [!WARNING]
+> The version on PyPI (`0.5`) may be outdated and raise errors like `Keystone assembly failed ...: 'offset'` when used with modern `radare2` versions.
+```bash
+pip install metame
+```
+
 ### Prerequisites
-- **[radare2](http://radare.org/)**: Used for binary analysis. Please make sure it is installed and available on your system's `PATH`.
+- **[radare2](http://radare.org/)**: Used for binary analysis. Please make sure it is installed and available on your system's `PATH`. Supports both older (`"offset"`) and newer (`"addr"`) JSON structures.
 - **`simplejson`** (Optional performance boost):
   ```bash
   pip install simplejson
