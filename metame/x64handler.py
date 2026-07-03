@@ -23,20 +23,27 @@ class X64Handler:
             return "nop"
         elif size == 2:
             if self.bits == 32:
-                r = random.randint(1, 3)
+                r = random.randint(1, 4)
                 if r == 1:
                     reg = random.choice(regs)
                     return f"push {reg}; pop {reg}"
                 elif r == 2:
                     return "pushad; popad"
+                elif r == 3:
+                    reg = random.choice(regs)
+                    return f"inc {reg}; dec {reg}"
                 else:
                     return "nop; nop"
             else:
+                r = random.randint(1, 2)
                 reg = random.choice(regs)
-                return f"push {reg}; pop {reg}"
+                if r == 1:
+                    return f"push {reg}; pop {reg}"
+                else:
+                    return f"inc {reg}; dec {reg}"
         elif size == 3:
             if self.bits == 32:
-                r = random.randint(1, 5)
+                r = random.randint(1, 7)
                 if r == 1:
                     return f"jmp {3 + prev_ins_size}; inc {random.choice(regs)}"
                 elif r == 2:
@@ -44,23 +51,44 @@ class X64Handler:
                 elif r == 3:
                     return f"jmp {3 + prev_ins_size}; pop {random.choice(regs)}"
                 elif r == 4:
+                    reg = random.choice(regs)
+                    return f"add {reg}, 0"
+                elif r == 5:
+                    reg = random.choice(regs)
+                    return f"or {reg}, 0"
+                elif r == 6:
                     return f"nop; {self.get_nops(2)}"
                 else:
                     return f"{self.get_nops(2)}; nop"
             else:
-                r = random.randint(1, 4)
+                r = random.randint(1, 6)
                 reg = random.choice(regs)
                 if r == 1:
                     return f"push {reg}; pop {reg}; nop"
                 elif r == 2:
                     return f"nop; push {reg}; pop {reg}"
                 elif r == 3:
+                    return f"inc {reg}; dec {reg}; nop"
+                elif r == 4:
+                    return f"nop; inc {reg}; dec {reg}"
+                elif r == 5:
                     return f"nop; {self.get_nops(2)}"
                 else:
                     return f"{self.get_nops(2)}; nop"
         elif size == 4:
-            if self.bits == 64:
-                r = random.randint(1, 5)
+            if self.bits == 32:
+                r = random.randint(1, 3)
+                if r == 1:
+                    reg = random.choice(regs)
+                    return f"add {reg}, 5; sub {reg}, 5"
+                elif r == 2:
+                    reg = random.choice(regs)
+                    return f"xor {reg}, 0; {self.get_nops(1)}"
+                else:
+                    return f"{self.get_nops(2)}; {self.get_nops(2)}"
+            else:
+                r = random.randint(1, 7)
+                reg = random.choice(regs)
                 if r == 1:
                     return f"jmp {4 + prev_ins_size}; pop {random.choice(regs)}; pop {random.choice(regs)}"
                 elif r == 2:
@@ -69,10 +97,12 @@ class X64Handler:
                     return f"jmp {4 + prev_ins_size}; push {random.choice(regs)}; pop {random.choice(regs)}"
                 elif r == 4:
                     return f"jmp {4 + prev_ins_size}; pop {random.choice(regs)}; push {random.choice(regs)}"
+                elif r == 5:
+                    return f"add {reg}, 0"
+                elif r == 6:
+                    return f"or {reg}, 0"
                 else:
                     return f"{self.get_nops(2)}; {self.get_nops(2)}"
-            else:
-                return "; ".join(["nop"] * size)
         
         return "; ".join(["nop"] * size)
 
@@ -86,11 +116,23 @@ class X64Handler:
 
     def init_mutations(self):
         if self.bits == 32:
-            self.mutables = frozenset(["nop", "acmp", "or", "xor", "sub", "mov", "push"])
+            self.mutables = frozenset(["nop", "acmp", "or", "xor", "sub", "mov", "push", "add", "shl", "je", "jz", "jne", "jnz"])
             raw_subs = [
                 (
                     ((r"^mov (?P<a>e..), (?P<b>(?P=a))$",), "mov {a}, {b}", True),
                     ((), "{nop2}", False),
+                ),
+                (
+                    ((r"^add (?P<a>e..), 1$",), "add {a}, 1", True),
+                    ((), "inc {a}; {nop2}", False),
+                ),
+                (
+                    ((r"^sub (?P<a>e..), 1$",), "sub {a}, 1", True),
+                    ((), "dec {a}; {nop2}", False),
+                ),
+                (
+                    ((r"^shl (?P<a>e..), 1$",), "shl {a}, 1", True),
+                    ((r"^add (?P<a>e..), (?P<b>(?P=a))$",), "add {a}, {a}", True),
                 ),
                 (
                     ((r"^nop$", r"^nop$", r"^nop$"), "nop; nop; nop", True),
@@ -128,14 +170,34 @@ class X64Handler:
                     ((), "{nop2}; push {b}; pop {a}", False),
                     ((), "{nop1}; push {b}; {nop1}; pop {a}", False),
                 ),
+                # Control Flow Branch swap
+                (
+                    ((r"^je (?P<a>.+)$",), "je {a}", True),
+                    ((r"^jz (?P<a>.+)$",), "jz {a}", True),
+                ),
+                (
+                    ((r"^jne (?P<a>.+)$",), "jne {a}", True),
+                    ((r"^jnz (?P<a>.+)$",), "jnz {a}", True),
+                ),
             ]
         else:
-            self.mutables = frozenset(["nop", "acmp", "or", "xor", "sub", "mov"])
+            self.mutables = frozenset(["nop", "acmp", "or", "xor", "sub", "mov", "add", "shl", "je", "jz", "jne", "jnz"])
             raw_subs = [
-                # Variations of 32 bits payloads
                 (
                     ((r"^mov (?P<a>e..), (?P<b>(?P=a))$",), "mov {a}, {b}", True),
                     ((), "{nop2}", False),
+                ),
+                (
+                    ((r"^add (?P<a>e..), 1$",), "add {a}, 1", True),
+                    ((), "inc {a}; {nop2}", False),
+                ),
+                (
+                    ((r"^sub (?P<a>e..), 1$",), "sub {a}, 1", True),
+                    ((), "dec {a}; {nop2}", False),
+                ),
+                (
+                    ((r"^shl (?P<a>e..), 1$",), "shl {a}, 1", True),
+                    ((r"^add (?P<a>e..), (?P<b>(?P=a))$",), "add {a}, {a}", True),
                 ),
                 (
                     ((r"^nop$", r"^nop$", r"^nop$"), "nop; nop; nop", True),
@@ -155,6 +217,18 @@ class X64Handler:
                 ),
                 # Purely 64 bits payloads
                 (
+                    ((r"^add (?P<a>r..), 1$",), "add {a}, 1", True),
+                    ((), "inc {a}; {nop1}", False),
+                ),
+                (
+                    ((r"^sub (?P<a>r..), 1$",), "sub {a}, 1", True),
+                    ((), "dec {a}; {nop1}", False),
+                ),
+                (
+                    ((r"^shl (?P<a>r..), 1$",), "shl {a}, 1", True),
+                    ((r"^add (?P<a>r..), (?P<b>(?P=a))$",), "add {a}, {a}", True),
+                ),
+                (
                     ((r"^test (?P<a>r..), (?P<b>(?P=a))$",), "test {a}, {b}", True),
                     ((r"^or (?P<a>r..), (?P<b>(?P=a))$",), "or {a}, {b}", True),
                 ),
@@ -167,6 +241,15 @@ class X64Handler:
                     ((), "push {b}; pop {a}; {nop1}", False),
                     ((), "{nop1}; push {b}; pop {a}", False),
                     ((), "push {b}; {nop1}; pop {a}", False),
+                ),
+                # Control Flow Branch swap
+                (
+                    ((r"^je (?P<a>.+)$",), "je {a}", True),
+                    ((r"^jz (?P<a>.+)$",), "jz {a}", True),
+                ),
+                (
+                    ((r"^jne (?P<a>.+)$",), "jne {a}", True),
+                    ((r"^jnz (?P<a>.+)$",), "jnz {a}", True),
                 ),
             ]
 
@@ -191,8 +274,8 @@ class X64Handler:
                             self.X64_SUBS[mnemonic] = []
                         self.X64_SUBS[mnemonic].append((eq, compiled_rule_tuple))
 
-    def assemble_code(self, codestr: str) -> str:
-        encoding, count = self.ks.asm(codestr)
+    def assemble_code(self, codestr: str, addr: int = 0) -> str:
+        encoding, count = self.ks.asm(codestr, addr)
         return "".join(["%02x" % i for i in encoding])
 
     def replace_fcn_opcodes(self, fcn_ctx: Dict[str, Any]) -> List[Dict[str, Any]]:
@@ -270,7 +353,7 @@ class X64Handler:
                     res_ass = re.sub(r"\{nop(\d+)\}", nop_resolver, res_ass)
 
                     try:
-                        new_assembly = self.assemble_code(res_ass)
+                        new_assembly = self.assemble_code(res_ass, op["offset"])
                     except Exception as e:
                         if self.debug:
                             print(f"[DEBUG] Keystone assembly failed for '{res_ass}': {e}")

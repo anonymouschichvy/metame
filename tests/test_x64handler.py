@@ -106,5 +106,26 @@ class TestX64Handler(unittest.TestCase):
         for rep in replacements:
             self.assertEqual(len(rep["newbytes"]), 4)
 
+    def test_replace_fcn_opcodes_advanced(self):
+        handler = X64Handler(bits=32, force_replace=True)
+        # Test branch alias conversion, inc/dec swaps, and shl expansion
+        fcn_ctx = {
+            "ops": [
+                {"opcode": "je 0x1000", "bytes": "74fe", "offset": 1000, "type": "cjmp"},
+                {"opcode": "add eax, 1", "bytes": "83c001", "offset": 1002, "type": "add"},
+                {"opcode": "shl ebx, 1", "bytes": "d1e3", "offset": 1005, "type": "shl"},
+            ]
+        }
+        replacements = handler.replace_fcn_opcodes(fcn_ctx)
+        self.assertGreater(len(replacements), 0)
+        
+        # Verify sizes are strictly conserved
+        ops_dict = {op["offset"]: op for op in fcn_ctx["ops"]}
+        for rep in replacements:
+            offset = rep["offset"]
+            orig_bytes = ops_dict[offset]["bytes"]
+            new_bytes = rep["newbytes"]
+            self.assertEqual(len(orig_bytes), len(new_bytes))
+
 if __name__ == "__main__":
     unittest.main()
