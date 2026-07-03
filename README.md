@@ -29,12 +29,12 @@
 
 ```mermaid
 graph TD
-    A[Open Binary via Radare2] --> B[Analyze Code / Functions]
-    B --> C[O(1) Mnemonic-Indexed Rule Lookup]
-    C --> D[Randomly Replace Instructions keeping logic & size]
-    D --> E[Dynamically Generate NOPs]
-    E --> F[Patch Original Binary using Radare2]
-    F --> G[Generate Mutated Variant]
+    A["Open Binary via Radare2"] --> B["Analyze Code / Functions"]
+    B --> C["O(1) Mnemonic-Indexed Rule Lookup"]
+    C --> D["Randomly Replace Instructions keeping logic & size"]
+    D --> E["Dynamically Generate NOPs"]
+    E --> F["Patch Original Binary using Radare2"]
+    F --> G["Generate Mutated Variant"]
 ```
 
 1. **Disassemble & Analyze**: Opens the input executable with `radare2` to load symbol metadata and function offsets.
@@ -62,13 +62,28 @@ graph TD
 
 ## 🚀 Installation
 
+### From PyPI
 ```bash
 pip install metame
 ```
 
+### From Source (Local Development)
+Navigate to the root directory of the project and run one of the following commands:
+
+**Developer Mode (Recommended)**:
+Installs the package in editable mode. Any changes to the source code are reflected immediately without re-installing:
+```bash
+pip install -e .
+```
+
+**Regular Local Install**:
+```bash
+pip install .
+```
+
 ### Prerequisites
-- **[radare2](http://radare.org/)**: Used for binary analysis. Please make sure it's installed and available on your system path.
-- **`simplejson`** (Optional):
+- **[radare2](http://radare.org/)**: Used for binary analysis. Please make sure it is installed and available on your system's `PATH`.
+- **`simplejson`** (Optional performance boost):
   ```bash
   pip install simplejson
   ```
