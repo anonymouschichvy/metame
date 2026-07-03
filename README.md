@@ -98,7 +98,7 @@ pip install .
 
 ### From PyPI
 > [!WARNING]
-> The version on PyPI (0.5) may be outdated and raise errors like `Keystone assembly failed ...: 'offset'` when used with modern radare2 versions.
+> The version on PyPI (0.4v) may be outdated and raise errors like `Keystone assembly failed ...: 'offset'` when used with modern radare2 versions.
 ```bash
 pip install metame
 ```
